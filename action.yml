@@ -15,6 +15,10 @@ inputs:
   whoop_refresh_token:
     description: 'Whoop Refresh Token'
     required: true
+  whoop_redirect_uri:
+    description: 'Whoop OAuth Redirect URI'
+    required: false
+    default: 'http://localhost:3000/api/auth/callback'
   days_back:
     description: 'Number of days to sync (default: 7)'
     required: false
