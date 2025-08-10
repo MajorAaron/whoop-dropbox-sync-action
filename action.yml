@@ -1,0 +1,55 @@
+name: 'Whoop to Obsidian Sync'
+description: 'Sync Whoop fitness data to Obsidian markdown notes with comprehensive metrics'
+author: 'MajorAaron'
+branding:
+  icon: 'activity'
+  color: 'purple'
+
+inputs:
+  whoop_client_id:
+    description: 'Whoop OAuth Client ID'
+    required: true
+  whoop_client_secret:
+    description: 'Whoop OAuth Client Secret'
+    required: true
+  whoop_refresh_token:
+    description: 'Whoop Refresh Token'
+    required: true
+  days_back:
+    description: 'Number of days to sync (default: 7)'
+    required: false
+    default: '7'
+  output_path:
+    description: 'Output path for notes relative to repository root (default: WHOOP)'
+    required: false
+    default: 'WHOOP'
+  create_readme:
+    description: 'Create README.md in output directory (default: true)'
+    required: false
+    default: 'true'
+  debug:
+    description: 'Enable debug logging (default: false)'
+    required: false
+    default: 'false'
+  date_format:
+    description: 'Date format for notes (default: YYYY-MM-DD)'
+    required: false
+    default: 'YYYY-MM-DD'
+
+outputs:
+  notes_created:
+    description: 'Number of notes created or updated'
+  new_refresh_token:
+    description: 'New refresh token if it was updated (store this in your secrets)'
+  sync_summary:
+    description: 'Summary of synced data'
+  sleep_records:
+    description: 'Number of sleep records synced'
+  recovery_records:
+    description: 'Number of recovery records synced'
+  workout_records:
+    description: 'Number of workout records synced'
+
+runs:
+  using: 'node20'
+  main: 'src/index.js'

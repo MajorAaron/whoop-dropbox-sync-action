@@ -1,0 +1,35 @@
+{
+  "name": "whoop-obsidian-sync-action",
+  "version": "1.0.0",
+  "description": "GitHub Action to sync Whoop fitness data to Obsidian markdown notes",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node src/index.js",
+    "test:local": "INPUT_DEBUG=true INPUT_DAYS_BACK=7 INPUT_OUTPUT_PATH=test-output node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MajorAaron/whoop-obsidian-sync-action.git"
+  },
+  "keywords": [
+    "github-action",
+    "whoop",
+    "obsidian",
+    "fitness",
+    "health",
+    "markdown",
+    "sync"
+  ],
+  "author": "MajorAaron",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MajorAaron/whoop-obsidian-sync-action/issues"
+  },
+  "homepage": "https://github.com/MajorAaron/whoop-obsidian-sync-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.10.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
