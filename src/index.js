@@ -30,6 +30,7 @@ async function main() {
     const clientId = getInput('whoop_client_id');
     const clientSecret = getInput('whoop_client_secret');
     const refreshToken = getInput('whoop_refresh_token');
+    const redirectUri = getInput('whoop_redirect_uri', 'http://localhost:3000/api/auth/callback');
     const daysBack = parseInt(getInput('days_back', '7'));
     const outputPath = getInput('output_path', 'WHOOP');
     const createReadme = getInput('create_readme', 'true') === 'true';
@@ -44,10 +45,11 @@ async function main() {
       logger.debug('Debug mode enabled');
       logger.debug(`Days back: ${daysBack}`);
       logger.debug(`Output path: ${outputPath}`);
+      logger.debug(`Redirect URI: ${redirectUri}`);
     }
     
     // Initialize components
-    const whoopClient = new WhoopClient(clientId, clientSecret, refreshToken);
+    const whoopClient = new WhoopClient(clientId, clientSecret, refreshToken, redirectUri);
     const formatter = new ObsidianFormatter();
     const fileManager = new FileManager(outputPath);
     

@@ -45,9 +45,14 @@ A GitHub Action that syncs your Whoop fitness data to Obsidian markdown notes wi
 ### Step 1: Get Whoop API Credentials
 
 1. Go to [Whoop Developer Portal](https://developer.whoop.com)
-2. Create an application
+2. Create an application with redirect URI: `http://localhost:8080/callback`
 3. Note your Client ID and Client Secret
-4. Get a refresh token using OAuth flow
+4. Get a refresh token:
+   ```bash
+   git clone https://github.com/MajorAaron/whoop-obsidian-sync-action.git
+   cd whoop-obsidian-sync-action
+   node fix-whoop-auth.js
+   ```
 
 ### Step 2: Add Secrets to Your Repository
 
@@ -260,7 +265,12 @@ If you encounter any issues or have questions:
 
 ### How do I get a Whoop refresh token?
 
-You'll need to implement the OAuth flow. See the [Whoop API documentation](https://developer.whoop.com/docs/authentication) for details.
+Use the included `fix-whoop-auth.js` script:
+```bash
+node fix-whoop-auth.js
+```
+
+For detailed instructions and troubleshooting, see the [OAuth Troubleshooting Guide](docs/oauth-troubleshooting.md).
 
 ### Can I sync more than 30 days of data?
 
@@ -269,6 +279,13 @@ Yes, adjust the `days_back` input. Note that syncing large amounts of data may t
 ### What happens if the action fails?
 
 The action will log the error. Your existing notes remain unchanged. Check the workflow logs for details.
+
+### Getting OAuth errors (400: invalid_request)?
+
+This usually means there's an issue with your OAuth configuration. Common fixes:
+1. Ensure your redirect URI is exactly: `http://localhost:8080/callback`
+2. Get a fresh refresh token using `fix-whoop-auth.js`
+3. Check the [OAuth Troubleshooting Guide](docs/oauth-troubleshooting.md) for detailed solutions
 
 ### Can I customize the note format?
 

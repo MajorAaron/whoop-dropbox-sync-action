@@ -5,6 +5,8 @@ node_modules/
 test-output/
 WHOOP/
 
+.mcp.json
+
 # Environment variables
 .env
 .env.local

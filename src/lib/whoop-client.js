@@ -7,13 +7,15 @@ const https = require('https');
 const logger = require('../utils/logger');
 
 class WhoopClient {
-  constructor(clientId, clientSecret, refreshToken) {
+  constructor(clientId, clientSecret, refreshToken, redirectUri = 'http://localhost:3000/api/auth/callback') {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.refreshToken = refreshToken;
+    this.redirectUri = redirectUri;
     this.accessToken = null;
     this.newRefreshToken = null;
     this.apiBase = 'https://api.prod.whoop.com';
+    this.scope = 'read:recovery read:cycles read:sleep read:workout read:profile read:body_measurement offline';
   }
 
   /**
@@ -26,11 +28,21 @@ class WhoopClient {
       grant_type: 'refresh_token',
       refresh_token: this.refreshToken,
       client_id: this.clientId,
-      client_secret: this.clientSecret
+      client_secret: this.clientSecret,
+      redirect_uri: this.redirectUri,
+      scope: this.scope
     });
 
     const bodyString = data.toString();
-    logger.debug('Token refresh body:', bodyString);
+    logger.debug('Token refresh request parameters:', {
+      grant_type: 'refresh_token',
+      client_id: this.clientId,
+      redirect_uri: this.redirectUri,
+      scope: this.scope,
+      // Don't log the actual secrets
+      has_refresh_token: !!this.refreshToken,
+      has_client_secret: !!this.clientSecret
+    });
 
     try {
       const response = await this.makeRequest('/oauth/oauth2/token', {
@@ -57,6 +69,20 @@ class WhoopClient {
       }
     } catch (error) {
       logger.error('Failed to refresh access token:', error.message);
+      
+      // Add more detailed error information for debugging
+      if (error.message.includes('API error')) {
+        logger.error('OAuth error details:', {
+          message: error.message,
+          endpoint: '/oauth/oauth2/token',
+          grant_type: 'refresh_token',
+          redirect_uri: this.redirectUri
+        });
+        logger.error('Please verify:');
+        logger.error('1. The redirect_uri matches what is registered in your Whoop app');
+        logger.error('2. The refresh token is still valid');
+        logger.error('3. The client ID and secret are correct');
+      }
       throw error;
     }
     
