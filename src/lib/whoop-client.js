@@ -29,8 +29,7 @@ class WhoopClient {
       refresh_token: this.refreshToken,
       client_id: this.clientId,
       client_secret: this.clientSecret,
-      redirect_uri: this.redirectUri,
-      scope: this.scope
+      redirect_uri: this.redirectUri
     });
 
     const bodyString = data.toString();
@@ -38,7 +37,6 @@ class WhoopClient {
       grant_type: 'refresh_token',
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
-      scope: this.scope,
       // Don't log the actual secrets
       has_refresh_token: !!this.refreshToken,
       has_client_secret: !!this.clientSecret
