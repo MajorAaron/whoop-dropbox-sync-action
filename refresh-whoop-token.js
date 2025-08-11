@@ -91,7 +91,7 @@ async function main() {
         console.log('\n📤 Updating GitHub secrets...');
         
         // Try to detect repository from git remote or use current repo
-        let repo = process.env.GITHUB_REPOSITORY || 'aaronmajor/whoop-obsidian-sync-action';
+        let repo = process.env.GITHUB_REPOSITORY || 'aarongmajor/whoop-dropbox-sync-action';
         try {
           const { stdout } = await execAsync('git remote get-url origin');
           const match = stdout.match(/github\.com[:/]([^/]+\/[^.]+)/);
