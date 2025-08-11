@@ -10,6 +10,7 @@ const ObsidianFormatter = require('./lib/obsidian-formatter');
 const FileManager = require('./lib/file-manager');
 const DropboxClient = require('./lib/dropbox-client');
 const DropboxTokenManager = require('./utils/dropbox-token-manager');
+const TokenManager = require('./utils/token-manager');
 const logger = require('./utils/logger');
 
 /**
@@ -81,8 +82,21 @@ async function main() {
     
     // Initialize components
     const whoopClient = new WhoopClient(clientId, clientSecret, refreshToken, redirectUri);
+    const tokenManager = new TokenManager();
     const formatter = new ObsidianFormatter();
     const fileManager = new FileManager(dropboxClient, dropboxPath);
+    
+    // Try to load cached tokens
+    const cachedTokens = tokenManager.loadTokens();
+    if (cachedTokens && !tokenManager.areTokensExpired(cachedTokens)) {
+      logger.info('Using cached access token');
+      whoopClient.setAccessToken(cachedTokens.access_token, cachedTokens.expires_in);
+      // Update refresh token if it's different
+      if (cachedTokens.refresh_token && cachedTokens.refresh_token !== refreshToken) {
+        logger.info('Using cached refresh token (newer than environment)');
+        whoopClient.refreshToken = cachedTokens.refresh_token;
+      }
+    }
     
     // Fetch data from Whoop
     logger.info(`📅 Fetching Whoop data for the last ${daysBack} days...`);
@@ -144,6 +158,18 @@ async function main() {
     logger.setOutput('sleep_records', data.sleep.length);
     logger.setOutput('recovery_records', data.recovery.length);
     logger.setOutput('workout_records', data.workouts.length);
+    
+    // Save tokens for next run
+    if (whoopClient.accessToken) {
+      const tokensToSave = {
+        access_token: whoopClient.accessToken,
+        refresh_token: whoopClient.refreshToken,
+        expires_in: 3600, // Default expiry
+        token_type: 'bearer',
+        scope: whoopClient.scope
+      };
+      tokenManager.saveTokens(tokensToSave);
+    }
     
     // Check for new refresh tokens
     const newWhoopRefreshToken = whoopClient.getNewRefreshToken();

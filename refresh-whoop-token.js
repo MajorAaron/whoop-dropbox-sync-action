@@ -53,8 +53,15 @@ async function main() {
   const tokenManager = new TokenManager();
   
   try {
-    // Step 1: Attempt to refresh the token
-    console.log('🔄 Refreshing access token...');
+    // Step 1: Check if we even need to refresh
+    if (whoopClient.isAccessTokenValid()) {
+      console.log('✅ Current access token is still valid!');
+      console.log('No refresh needed at this time.');
+      process.exit(0);
+    }
+    
+    // Step 2: Attempt to refresh the token
+    console.log('🔄 Access token expired, refreshing...');
     const success = await whoopClient.refreshAccessToken();
     
     if (success) {
@@ -68,13 +75,14 @@ async function main() {
         console.log(`  Old token (last 8): ...${refreshToken.slice(-8)}`);
         console.log(`  New token (last 8): ...${newRefreshToken.slice(-8)}`);
         
-        // Save to token manager
+        // Save to token manager with proper expiry
         tokenManager.saveTokens({
           access_token: whoopClient.accessToken,
           refresh_token: newRefreshToken,
           expires_in: 3600,
           token_type: 'bearer',
-          scope: whoopClient.scope
+          scope: whoopClient.scope,
+          updated_at: new Date().toISOString()
         });
         
         // Update .env file
@@ -116,13 +124,14 @@ async function main() {
       } else {
         console.log('✅ Refresh token unchanged (not rotated)');
         
-        // Still save the access token
+        // Still save the access token with proper expiry
         tokenManager.saveTokens({
           access_token: whoopClient.accessToken,
           refresh_token: refreshToken,
           expires_in: 3600,
           token_type: 'bearer',
-          scope: whoopClient.scope
+          scope: whoopClient.scope,
+          updated_at: new Date().toISOString()
         });
       }
       

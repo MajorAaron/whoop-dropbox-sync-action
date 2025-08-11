@@ -2,8 +2,6 @@
  * Logger utility for consistent logging across the action
  */
 
-const fs = require('fs');
-
 // Only require @actions/core if we're in a GitHub Actions environment
 let core;
 try {

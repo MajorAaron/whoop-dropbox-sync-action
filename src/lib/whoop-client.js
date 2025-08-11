@@ -13,10 +13,35 @@ class WhoopClient {
     this.refreshToken = refreshToken;
     this.redirectUri = redirectUri;
     this.accessToken = null;
+    this.accessTokenExpiry = null; // Track when access token expires
     this.newRefreshToken = null;
     this.apiBase = 'https://api.prod.whoop.com';
     this.scope = 'read:recovery read:cycles read:sleep read:workout read:profile read:body_measurement offline';
     this.refreshPromise = null; // Track ongoing refresh to prevent concurrent refreshes
+  }
+
+  /**
+   * Check if the current access token is still valid
+   */
+  isAccessTokenValid() {
+    if (!this.accessToken || !this.accessTokenExpiry) {
+      return false;
+    }
+    
+    // Check if token has expired (with 5 minute buffer)
+    const now = Date.now();
+    const bufferMs = 5 * 60 * 1000; // 5 minutes
+    return now < (this.accessTokenExpiry - bufferMs);
+  }
+
+  /**
+   * Set access token with expiry tracking
+   */
+  setAccessToken(token, expiresIn = 3600) {
+    this.accessToken = token;
+    // Calculate expiry time (expires_in is in seconds)
+    this.accessTokenExpiry = Date.now() + (expiresIn * 1000);
+    logger.debug(`Access token set, expires at ${new Date(this.accessTokenExpiry).toISOString()}`);
   }
 
   /**
@@ -73,7 +98,8 @@ class WhoopClient {
       }, false);
 
       if (response.access_token) {
-        this.accessToken = response.access_token;
+        // Set access token with expiry tracking
+        this.setAccessToken(response.access_token, response.expires_in || 3600);
         
         // Check if refresh token was rotated
         if (response.refresh_token && response.refresh_token !== this.refreshToken) {
@@ -83,6 +109,7 @@ class WhoopClient {
         }
         
         logger.success('Access token refreshed successfully');
+        logger.info(`Token expires in ${response.expires_in || 3600} seconds`);
         return true;
       }
     } catch (error) {
@@ -170,8 +197,13 @@ class WhoopClient {
    * Fetch all data types from Whoop API
    */
   async fetchAllData(daysBack = 7) {
-    // First ensure we have a valid access token
-    await this.refreshAccessToken();
+    // Only refresh if token is invalid or expired
+    if (!this.isAccessTokenValid()) {
+      logger.info('Access token expired or missing, refreshing...');
+      await this.refreshAccessToken();
+    } else {
+      logger.debug('Access token is still valid, skipping refresh');
+    }
     
     const endDate = new Date();
     const startDate = new Date();
