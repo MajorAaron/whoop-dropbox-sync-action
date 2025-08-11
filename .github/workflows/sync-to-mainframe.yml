@@ -61,30 +61,39 @@ jobs:
       
       - name: Update Whoop refresh token if rotated
         if: steps.whoop-sync.outputs.new_refresh_token != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.PA_TOKEN }}
         run: |
+          echo "Attempting to update WHOOP_REFRESH_TOKEN secret..."
           gh secret set WHOOP_REFRESH_TOKEN \
             --body "${{ steps.whoop-sync.outputs.new_refresh_token }}" \
-            --repo ${{ github.repository }}
+            --repo ${{ github.repository }} || \
+          echo "::warning::Failed to update WHOOP_REFRESH_TOKEN. Please update manually with the token from the logs."
       
       - name: Update Dropbox access token if refreshed
         if: steps.whoop-sync.outputs.new_dropbox_access_token != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.PA_TOKEN }}
         run: |
+          echo "Attempting to update DROPBOX_ACCESS_TOKEN secret..."
           gh secret set DROPBOX_ACCESS_TOKEN \
             --body "${{ steps.whoop-sync.outputs.new_dropbox_access_token }}" \
-            --repo ${{ github.repository }}
+            --repo ${{ github.repository }} || \
+          echo "::warning::Failed to update DROPBOX_ACCESS_TOKEN. Please update manually."
       
       - name: Update Dropbox refresh token if rotated
         if: steps.whoop-sync.outputs.new_dropbox_refresh_token != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.PA_TOKEN }}
         run: |
+          echo "Attempting to update DROPBOX_REFRESH_TOKEN secret..."
           gh secret set DROPBOX_REFRESH_TOKEN \
             --body "${{ steps.whoop-sync.outputs.new_dropbox_refresh_token }}" \
-            --repo ${{ github.repository }}
+            --repo ${{ github.repository }} || \
+          echo "::warning::Failed to update DROPBOX_REFRESH_TOKEN. Please update manually."
       
       - name: Check sync result
         if: steps.whoop-sync.outcome == 'failure'
