@@ -8,6 +8,8 @@
 const WhoopClient = require('./lib/whoop-client');
 const ObsidianFormatter = require('./lib/obsidian-formatter');
 const FileManager = require('./lib/file-manager');
+const DropboxClient = require('./lib/dropbox-client');
+const DropboxTokenManager = require('./utils/dropbox-token-manager');
 const logger = require('./utils/logger');
 
 /**
@@ -26,32 +28,61 @@ async function main() {
   try {
     logger.info('🚀 Starting Whoop to Obsidian Sync Action');
     
-    // Get inputs
+    // Get Whoop inputs
     const clientId = getInput('whoop_client_id');
     const clientSecret = getInput('whoop_client_secret');
     const refreshToken = getInput('whoop_refresh_token');
     const redirectUri = getInput('whoop_redirect_uri', 'http://localhost:3000/api/auth/callback');
+    
+    // Get Dropbox inputs
+    const dropboxAppKey = getInput('dropbox_app_key');
+    const dropboxAppSecret = getInput('dropbox_app_secret');
+    const dropboxAccessToken = getInput('dropbox_access_token');
+    const dropboxRefreshToken = getInput('dropbox_refresh_token');
+    
+    // Get other inputs
     const daysBack = parseInt(getInput('days_back', '7'));
-    const outputPath = getInput('output_path', 'WHOOP');
+    const dropboxPath = getInput('dropbox_path', '/WHOOP');
     const createReadme = getInput('create_readme', 'true') === 'true';
     const debug = getInput('debug', 'false') === 'true';
     
     // Validate required inputs
     if (!clientId || !clientSecret || !refreshToken) {
-      throw new Error('Missing required inputs: whoop_client_id, whoop_client_secret, or whoop_refresh_token');
+      throw new Error('Missing required Whoop inputs: whoop_client_id, whoop_client_secret, or whoop_refresh_token');
+    }
+    
+    if (!dropboxAppKey || !dropboxAppSecret || !dropboxAccessToken || !dropboxRefreshToken) {
+      throw new Error('Missing required Dropbox inputs: dropbox_app_key, dropbox_app_secret, dropbox_access_token, or dropbox_refresh_token');
     }
     
     if (debug) {
       logger.debug('Debug mode enabled');
       logger.debug(`Days back: ${daysBack}`);
-      logger.debug(`Output path: ${outputPath}`);
+      logger.debug(`Dropbox path: ${dropboxPath}`);
       logger.debug(`Redirect URI: ${redirectUri}`);
+    }
+    
+    // Initialize Dropbox components
+    const dropboxTokenManager = new DropboxTokenManager();
+    const dropboxClient = new DropboxClient(
+      dropboxAppKey,
+      dropboxAppSecret,
+      dropboxAccessToken,
+      dropboxRefreshToken,
+      dropboxTokenManager
+    );
+    
+    // Test Dropbox connection
+    logger.info('🔗 Connecting to Dropbox...');
+    const dropboxConnected = await dropboxClient.testConnection();
+    if (!dropboxConnected) {
+      throw new Error('Failed to connect to Dropbox');
     }
     
     // Initialize components
     const whoopClient = new WhoopClient(clientId, clientSecret, refreshToken, redirectUri);
     const formatter = new ObsidianFormatter();
-    const fileManager = new FileManager(outputPath);
+    const fileManager = new FileManager(dropboxClient, dropboxPath);
     
     // Fetch data from Whoop
     logger.info(`📅 Fetching Whoop data for the last ${daysBack} days...`);
@@ -114,19 +145,22 @@ async function main() {
     logger.setOutput('recovery_records', data.recovery.length);
     logger.setOutput('workout_records', data.workouts.length);
     
-    // Check for new refresh token
-    const newRefreshToken = whoopClient.getNewRefreshToken();
-    if (newRefreshToken) {
-      logger.warning('⚠️ Refresh token was updated! Update your WHOOP_REFRESH_TOKEN secret with the new value.');
-      logger.setOutput('new_refresh_token', newRefreshToken);
+    // Check for new refresh tokens
+    const newWhoopRefreshToken = whoopClient.getNewRefreshToken();
+    if (newWhoopRefreshToken) {
+      logger.warning('⚠️ Whoop refresh token was updated! Update your WHOOP_REFRESH_TOKEN secret with the new value.');
+      logger.setOutput('new_refresh_token', newWhoopRefreshToken);
     }
+    
+    // Output Dropbox tokens if they were refreshed
+    dropboxTokenManager.outputTokensForGitHub();
     
     // Create sync summary
     const syncSummary = `Synced ${notesCreated} notes (${data.sleep.length} sleep, ${data.recovery.length} recovery, ${data.workouts.length} workouts)`;
     logger.setOutput('sync_summary', syncSummary);
     
     // Success message
-    logger.success(`✅ Sync completed! Created/updated ${notesCreated} notes.`);
+    logger.success(`✅ Sync to Dropbox completed! Uploaded ${notesCreated} notes.`);
     
     if (processedDates.length > 0) {
       logger.info(`📝 Processed dates: ${processedDates.slice(0, 5).join(', ')}${processedDates.length > 5 ? ` and ${processedDates.length - 5} more` : ''}`);

@@ -1,4 +1,4 @@
-name: Sync Whoop to THE MAINFRAME
+name: Sync Whoop to Dropbox
 
 on:
   schedule:
@@ -23,21 +23,10 @@ on:
 jobs:
   sync-whoop-data:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      
+    
     steps:
       - name: Checkout sync action
         uses: actions/checkout@v4
-        with:
-          path: sync-action
-      
-      - name: Checkout THE MAINFRAME
-        uses: actions/checkout@v4
-        with:
-          repository: MajorAaron/THE-MAINFRAME
-          token: ${{ secrets.PA_TOKEN }}
-          path: mainframe
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -45,24 +34,31 @@ jobs:
           node-version: '20'
       
       - name: Install dependencies
-        working-directory: sync-action
         run: npm install
       
-      - name: Sync Whoop Data
+      - name: Sync Whoop Data to Dropbox
         id: whoop-sync
-        working-directory: sync-action
         env:
+          # Whoop OAuth credentials
           WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
           WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
           WHOOP_REFRESH_TOKEN: ${{ secrets.WHOOP_REFRESH_TOKEN }}
           WHOOP_REDIRECT_URI: ${{ secrets.WHOOP_REDIRECT_URI || 'http://localhost:3000/api/auth/callback' }}
-          OUTPUT_PATH: ../mainframe
+          
+          # Dropbox OAuth credentials
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}
+          DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+          
+          # Sync configuration
+          DROPBOX_PATH: /WHOOP
           DAYS_BACK: ${{ github.event.inputs.days_back || '7' }}
           START_DATE: ${{ github.event.inputs.start_date }}
           END_DATE: ${{ github.event.inputs.end_date }}
         run: node src/index.js
       
-      - name: Update refresh token if rotated
+      - name: Update Whoop refresh token if rotated
         if: steps.whoop-sync.outputs.new_refresh_token != ''
         env:
           GH_TOKEN: ${{ secrets.PA_TOKEN }}
@@ -71,18 +67,20 @@ jobs:
             --body "${{ steps.whoop-sync.outputs.new_refresh_token }}" \
             --repo ${{ github.repository }}
       
-      - name: Commit and push changes to THE MAINFRAME
-        working-directory: mainframe
+      - name: Update Dropbox access token if refreshed
+        if: steps.whoop-sync.outputs.new_dropbox_access_token != ''
+        env:
+          GH_TOKEN: ${{ secrets.PA_TOKEN }}
         run: |
-          git config user.name "Whoop Sync Bot"
-          git config user.email "action@github.com"
-          
-          # Check if there are changes
-          if [ -n "$(git status --porcelain)" ]; then
-            git add .
-            git commit -m "Whoop data sync - $(date +'%Y-%m-%d')"
-            git push
-            echo "✅ Changes pushed to THE MAINFRAME"
-          else
-            echo "📝 No changes to commit"
-          fi
+          gh secret set DROPBOX_ACCESS_TOKEN \
+            --body "${{ steps.whoop-sync.outputs.new_dropbox_access_token }}" \
+            --repo ${{ github.repository }}
+      
+      - name: Update Dropbox refresh token if rotated
+        if: steps.whoop-sync.outputs.new_dropbox_refresh_token != ''
+        env:
+          GH_TOKEN: ${{ secrets.PA_TOKEN }}
+        run: |
+          gh secret set DROPBOX_REFRESH_TOKEN \
+            --body "${{ steps.whoop-sync.outputs.new_dropbox_refresh_token }}" \
+            --repo ${{ github.repository }}

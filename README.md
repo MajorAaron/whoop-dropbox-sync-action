@@ -1,18 +1,19 @@
-# Whoop to Obsidian Sync Action
+# Whoop to Dropbox Sync Action
 
-[![GitHub Action](https://img.shields.io/badge/GitHub-Action-blue?logo=github)](https://github.com/marketplace/actions/whoop-to-obsidian-sync)
+[![GitHub Action](https://img.shields.io/badge/GitHub-Action-blue?logo=github)](https://github.com/marketplace/actions/whoop-to-dropbox-sync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A GitHub Action that syncs your Whoop fitness data to Obsidian markdown notes with comprehensive health metrics, sleep analysis, recovery scores, and workout details.
+A GitHub Action that syncs your Whoop fitness data directly to Dropbox as Obsidian-formatted markdown notes with comprehensive health metrics, sleep analysis, recovery scores, and workout details.
 
 ## 🌟 Features
 
+- **Direct Dropbox Upload**: Syncs data directly to your Dropbox account
 - **Comprehensive Data Sync**: Recovery, sleep, strain, workouts, and body measurements
 - **Rich Markdown Format**: Beautiful notes with frontmatter, emojis, and structured sections
-- **Automatic Token Rotation**: Handles Whoop's rotating refresh tokens seamlessly
-- **Flexible Configuration**: Customize output paths and sync duration
-- **Daily Notes Structure**: Organized by year and month
-- **Minimal Dependencies**: Uses @actions/core and dotenv only
+- **Automatic Token Management**: Handles both Whoop and Dropbox token rotation
+- **Flexible Configuration**: Customize Dropbox paths and sync duration
+- **Daily Notes Structure**: Organized by year and month in Dropbox
+- **No Local Storage**: Files upload directly to Dropbox without local intermediates
 
 ## 📊 Data Synced
 
@@ -44,11 +45,14 @@ A GitHub Action that syncs your Whoop fitness data to Obsidian markdown notes wi
 
 ### Prerequisites
 
-1. A GitHub repository for your Obsidian vault
+1. A Dropbox account for storing your Obsidian notes
 2. Whoop API credentials
-3. A Personal Access Token (PAT) with `repo` and `workflow` permissions
+3. Dropbox API credentials
+4. A Personal Access Token (PAT) with `repo` and `workflow` permissions
 
-### Step 1: Get Whoop API Credentials
+### Step 1: Get API Credentials
+
+#### Whoop API
 
 1. Go to [Whoop Developer Portal](https://developer.whoop.com)
 2. Create an application with redirect URI: `http://localhost:3000/api/auth/callback`
@@ -61,13 +65,33 @@ A GitHub Action that syncs your Whoop fitness data to Obsidian markdown notes wi
    node get-whoop-token.js
    ```
 
+#### Dropbox API
+
+1. Go to [Dropbox App Console](https://www.dropbox.com/developers/apps)
+2. Create a new app with "Full Dropbox" access
+3. Note your App Key and App Secret
+4. Get OAuth tokens:
+   ```bash
+   cd whoop-obsidian-sync-action
+   node setup-dropbox-auth.js
+   ```
+
 ### Step 2: Add Secrets to Your Repository
 
 Add these secrets to your repository (Settings → Secrets → Actions):
 
+**Whoop Secrets:**
 - `WHOOP_CLIENT_ID`: Your Whoop application client ID
 - `WHOOP_CLIENT_SECRET`: Your Whoop application client secret
-- `WHOOP_REFRESH_TOKEN`: Your Whoop refresh token (from step 1)
+- `WHOOP_REFRESH_TOKEN`: Your Whoop refresh token
+
+**Dropbox Secrets:**
+- `DROPBOX_APP_KEY`: Your Dropbox app key
+- `DROPBOX_APP_SECRET`: Your Dropbox app secret
+- `DROPBOX_ACCESS_TOKEN`: Your Dropbox access token
+- `DROPBOX_REFRESH_TOKEN`: Your Dropbox refresh token
+
+**GitHub Secret:**
 - `PA_TOKEN`: GitHub Personal Access Token with `repo` and `workflow` permissions
 
 ### Step 3: Create Workflow
@@ -75,7 +99,7 @@ Add these secrets to your repository (Settings → Secrets → Actions):
 Create `.github/workflows/whoop-sync.yml` in your repository:
 
 ```yaml
-name: Sync Whoop Data to Obsidian
+name: Sync Whoop Data to Dropbox
 
 on:
   schedule:
@@ -88,55 +112,64 @@ on:
         required: false
         default: '7'
 
-permissions:
-  contents: write
-  actions: write
-
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout action
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PA_TOKEN }}
+          repository: MajorAaron/whoop-obsidian-sync-action
+          ref: main
         
-      - name: Sync Whoop data
-        id: whoop-sync
-        uses: MajorAaron/whoop-obsidian-sync-action@main
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          whoop_client_id: ${{ secrets.WHOOP_CLIENT_ID }}
-          whoop_client_secret: ${{ secrets.WHOOP_CLIENT_SECRET }}
-          whoop_refresh_token: ${{ secrets.WHOOP_REFRESH_TOKEN }}
-          whoop_redirect_uri: 'http://localhost:3000/api/auth/callback'
-          days_back: ${{ github.event.inputs.days_back || '7' }}
-          output_path: 'WHOOP'
-          create_readme: 'true'
-          debug: 'false'
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Sync Whoop data to Dropbox
+        id: whoop-sync
+        env:
+          # Whoop credentials
+          WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
+          WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
+          WHOOP_REFRESH_TOKEN: ${{ secrets.WHOOP_REFRESH_TOKEN }}
+          # Dropbox credentials
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}
+          DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+          # Configuration
+          DAYS_BACK: ${{ github.event.inputs.days_back || '7' }}
+          DROPBOX_PATH: '/WHOOP'
+        run: node src/index.js
           
-      - name: Update refresh token if rotated
+      - name: Update Whoop refresh token if rotated
         if: steps.whoop-sync.outputs.new_refresh_token != ''
         env:
           GH_TOKEN: ${{ secrets.PA_TOKEN }}
         run: |
-          echo "🔄 Refresh token was rotated, updating secret..."
           gh secret set WHOOP_REFRESH_TOKEN \
             --body "${{ steps.whoop-sync.outputs.new_refresh_token }}" \
             --repo ${{ github.repository }}
-          echo "✅ Refresh token updated successfully"
-          
-      - name: Commit and push changes
+      
+      - name: Update Dropbox tokens if refreshed
+        if: steps.whoop-sync.outputs.new_dropbox_access_token != '' || steps.whoop-sync.outputs.new_dropbox_refresh_token != ''
+        env:
+          GH_TOKEN: ${{ secrets.PA_TOKEN }}
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          if [[ -n $(git status -s) ]]; then
-            git add .
-            git commit -m "Sync Whoop data - ${{ steps.whoop-sync.outputs.sync_summary || 'Daily sync' }}"
-            git push
-            echo "✅ Changes committed and pushed"
-          else
-            echo "No changes to commit"
+          if [ -n "${{ steps.whoop-sync.outputs.new_dropbox_access_token }}" ]; then
+            gh secret set DROPBOX_ACCESS_TOKEN \
+              --body "${{ steps.whoop-sync.outputs.new_dropbox_access_token }}" \
+              --repo ${{ github.repository }}
+          fi
+          if [ -n "${{ steps.whoop-sync.outputs.new_dropbox_refresh_token }}" ]; then
+            gh secret set DROPBOX_REFRESH_TOKEN \
+              --body "${{ steps.whoop-sync.outputs.new_dropbox_refresh_token }}" \
+              --repo ${{ github.repository }}
           fi
 ```
 
@@ -150,43 +183,56 @@ jobs:
 | `whoop_client_secret` | Whoop OAuth Client Secret | Yes | - |
 | `whoop_refresh_token` | Whoop Refresh Token | Yes | - |
 | `whoop_redirect_uri` | OAuth Redirect URI | No | `http://localhost:3000/api/auth/callback` |
+| `dropbox_app_key` | Dropbox App Key | Yes | - |
+| `dropbox_app_secret` | Dropbox App Secret | Yes | - |
+| `dropbox_access_token` | Dropbox Access Token | Yes | - |
+| `dropbox_refresh_token` | Dropbox Refresh Token | Yes | - |
 | `days_back` | Number of days to sync | No | `7` |
-| `output_path` | Output path for notes | No | `WHOOP` |
-| `create_readme` | Create README in output directory | No | `true` |
+| `dropbox_path` | Dropbox path for notes | No | `/WHOOP` |
+| `create_readme` | Create README in Dropbox | No | `true` |
 | `debug` | Enable debug logging | No | `false` |
 
 ### Outputs
 
 | Output | Description |
 |--------|-------------|
-| `notes_created` | Number of notes created or updated |
-| `new_refresh_token` | New refresh token if it was rotated |
+| `notes_created` | Number of notes uploaded to Dropbox |
+| `new_refresh_token` | New Whoop refresh token if rotated |
+| `new_dropbox_access_token` | New Dropbox access token if refreshed |
+| `new_dropbox_refresh_token` | New Dropbox refresh token if rotated |
 | `sync_summary` | Summary of synced data |
 | `sleep_records` | Number of sleep records synced |
 | `recovery_records` | Number of recovery records synced |
 | `workout_records` | Number of workout records synced |
 
-## 🔄 How Token Rotation Works
+## 🔄 How Token Management Works
 
-Whoop uses rotating refresh tokens for security. Each time a refresh token is used, it becomes invalid and a new one is issued. This action handles this automatically:
+### Whoop Token Rotation
+Whoop uses rotating refresh tokens for security. Each time a refresh token is used, it becomes invalid and a new one is issued.
 
-1. **Initial Setup**: You provide the initial refresh token as a GitHub secret
+### Dropbox Token Refresh
+Dropbox access tokens expire after ~4 hours. The action automatically refreshes them using the refresh token.
+
+### Automatic Updates
+Both Whoop and Dropbox tokens are automatically updated in your GitHub secrets when they change:
+
+1. **Initial Setup**: You provide initial tokens as GitHub secrets
 2. **During Sync**: 
-   - The action uses the refresh token to get an access token
-   - If Whoop rotates the refresh token, the action captures the new one
+   - The action refreshes tokens as needed
+   - Captures any new tokens issued
 3. **Automatic Update**: 
-   - The workflow detects the new token via the action's output
-   - Uses GitHub CLI to update the `WHOOP_REFRESH_TOKEN` secret
-   - Next run uses the new token automatically
+   - The workflow detects new tokens via action outputs
+   - Uses GitHub CLI to update secrets
+   - Next run uses the new tokens automatically
 
 **Important**: Your PA_TOKEN must have permissions to update repository secrets.
 
-## 📁 Output Structure
+## 📁 Dropbox Structure
 
-The action creates the following structure in your repository:
+The action creates the following structure in your Dropbox:
 
 ```
-output_path/
+/WHOOP/
 ├── Daily/
 │   └── 2025/
 │       └── 08-August/
@@ -195,6 +241,8 @@ output_path/
 │           └── ...
 └── README.md
 ```
+
+You can customize the root path using the `dropbox_path` input.
 
 ## 📝 Note Format
 
@@ -243,19 +291,14 @@ cd whoop-obsidian-sync-action
 # Install dependencies
 npm install
 
-# Create .env file with your credentials
-cat > .env << EOF
-WHOOP_CLIENT_ID=your-client-id
-WHOOP_CLIENT_SECRET=your-client-secret
-WHOOP_REFRESH_TOKEN=your-refresh-token
-WHOOP_REDIRECT_URI=http://localhost:3000/api/auth/callback
-EOF
+# Set up Whoop authentication
+node get-whoop-token.js
 
-# Test the OAuth flow
-node test-oauth.js
+# Set up Dropbox authentication
+node setup-dropbox-auth.js
 
-# Run the sync locally
-npm run test:local
+# Test the complete sync to Dropbox
+node test-dropbox-sync.js
 ```
 
 ## 🔧 Troubleshooting
@@ -284,11 +327,23 @@ If tokens aren't updating automatically:
 2. Ensure `PA_TOKEN` is set correctly with proper permissions
 3. Look for the step output in your workflow run logs
 
-### No Data Appearing
+### No Data in Dropbox
 
 - Verify you have Whoop data for the sync period
 - Check the action logs for any API errors
-- Ensure your output path exists in the repository
+- Ensure Dropbox authentication is working
+- Check the Dropbox path in your configuration
+
+### Dropbox Authentication Issues
+
+1. **Access Token Expired**:
+   - Access tokens expire after ~4 hours
+   - The action should auto-refresh using the refresh token
+   - If not working, run `node setup-dropbox-auth.js` for new tokens
+
+2. **Permission Denied**:
+   - Ensure your Dropbox app has "Full Dropbox" access
+   - Check that all Dropbox secrets are set correctly
 
 ## 🤝 Contributing
 

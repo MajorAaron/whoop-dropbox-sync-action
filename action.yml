@@ -1,11 +1,12 @@
-name: 'Whoop to Obsidian Sync'
-description: 'Sync Whoop fitness data to Obsidian markdown notes with comprehensive metrics'
+name: 'Whoop to Dropbox Sync'
+description: 'Sync Whoop fitness data to Dropbox as Obsidian markdown notes'
 author: 'MajorAaron'
 branding:
   icon: 'activity'
   color: 'purple'
 
 inputs:
+  # Whoop OAuth credentials
   whoop_client_id:
     description: 'Whoop OAuth Client ID'
     required: true
@@ -19,16 +20,32 @@ inputs:
     description: 'Whoop OAuth Redirect URI'
     required: false
     default: 'http://localhost:3000/api/auth/callback'
+  
+  # Dropbox OAuth credentials
+  dropbox_app_key:
+    description: 'Dropbox App Key'
+    required: true
+  dropbox_app_secret:
+    description: 'Dropbox App Secret'
+    required: true
+  dropbox_access_token:
+    description: 'Dropbox Access Token'
+    required: true
+  dropbox_refresh_token:
+    description: 'Dropbox Refresh Token'
+    required: true
+  
+  # Sync configuration
   days_back:
     description: 'Number of days to sync (default: 7)'
     required: false
     default: '7'
-  output_path:
-    description: 'Output path for notes relative to repository root (default: WHOOP)'
+  dropbox_path:
+    description: 'Dropbox path for notes (default: /WHOOP)'
     required: false
-    default: 'WHOOP'
+    default: '/WHOOP'
   create_readme:
-    description: 'Create README.md in output directory (default: true)'
+    description: 'Create README.md in Dropbox (default: true)'
     required: false
     default: 'true'
   debug:
@@ -42,9 +59,13 @@ inputs:
 
 outputs:
   notes_created:
-    description: 'Number of notes created or updated'
+    description: 'Number of notes uploaded to Dropbox'
   new_refresh_token:
-    description: 'New refresh token if it was updated (store this in your secrets)'
+    description: 'New Whoop refresh token if it was updated (store this in your secrets)'
+  new_dropbox_access_token:
+    description: 'New Dropbox access token if refreshed'
+  new_dropbox_refresh_token:
+    description: 'New Dropbox refresh token if rotated'
   sync_summary:
     description: 'Summary of synced data'
   sleep_records:
