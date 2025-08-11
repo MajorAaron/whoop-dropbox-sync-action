@@ -43,10 +43,25 @@ jobs:
           GH_TOKEN: ${{ secrets.PA_TOKEN }}
         run: |
           echo "🔄 Refresh token was rotated, updating secret..."
+          
+          # Store the new token
+          NEW_TOKEN="${{ steps.whoop-sync.outputs.new_refresh_token }}"
+          
+          # Update the secret
           gh secret set WHOOP_REFRESH_TOKEN \
-            --body "${{ steps.whoop-sync.outputs.new_refresh_token }}" \
+            --body "$NEW_TOKEN" \
             --repo ${{ github.repository }}
+          
+          # Verify the update
           echo "✅ Refresh token updated successfully"
+          echo "📋 Token details:"
+          echo "  - Last 8 chars of new token: ...${NEW_TOKEN: -8}"
+          echo "  - Token length: ${#NEW_TOKEN} characters"
+          echo "  - Update timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          
+          # Log to step summary for visibility
+          echo "### 🔄 Token Rotation" >> $GITHUB_STEP_SUMMARY
+          echo "Refresh token was successfully rotated and updated at $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
           
       - name: Commit and push changes
         run: |

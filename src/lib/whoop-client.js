@@ -24,13 +24,14 @@ class WhoopClient {
   async refreshAccessToken() {
     logger.info('Refreshing access token...');
     
+    // Match Postman's working configuration:
+    // Include redirect_uri but not scope in refresh requests
     const data = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: this.refreshToken,
       client_id: this.clientId,
       client_secret: this.clientSecret,
-      redirect_uri: this.redirectUri,
-      scope: 'offline'
+      redirect_uri: this.redirectUri
     });
 
     const bodyString = data.toString();
@@ -38,7 +39,6 @@ class WhoopClient {
       grant_type: 'refresh_token',
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
-      scope: 'offline',
       // Don't log the actual secrets
       has_refresh_token: !!this.refreshToken,
       has_client_secret: !!this.clientSecret
@@ -75,13 +75,13 @@ class WhoopClient {
         logger.error('OAuth error details:', {
           message: error.message,
           endpoint: '/oauth/oauth2/token',
-          grant_type: 'refresh_token',
-          scope: 'offline'
+          grant_type: 'refresh_token'
         });
         logger.error('Please verify:');
-        logger.error('1. The refresh token is still valid');
+        logger.error('1. The refresh token is still valid and not expired');
         logger.error('2. The client ID and secret are correct');
-        logger.error('3. The "offline" scope was included in the original authorization');
+        logger.error('3. The original authorization included the "offline" scope');
+        logger.error('4. The refresh token has not been revoked or replaced');
       }
       throw error;
     }
