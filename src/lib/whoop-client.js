@@ -29,7 +29,8 @@ class WhoopClient {
       refresh_token: this.refreshToken,
       client_id: this.clientId,
       client_secret: this.clientSecret,
-      redirect_uri: this.redirectUri
+      redirect_uri: this.redirectUri,
+      scope: 'offline'
     });
 
     const bodyString = data.toString();
@@ -37,6 +38,7 @@ class WhoopClient {
       grant_type: 'refresh_token',
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
+      scope: 'offline',
       // Don't log the actual secrets
       has_refresh_token: !!this.refreshToken,
       has_client_secret: !!this.clientSecret
@@ -74,12 +76,12 @@ class WhoopClient {
           message: error.message,
           endpoint: '/oauth/oauth2/token',
           grant_type: 'refresh_token',
-          redirect_uri: this.redirectUri
+          scope: 'offline'
         });
         logger.error('Please verify:');
-        logger.error('1. The redirect_uri matches what is registered in your Whoop app');
-        logger.error('2. The refresh token is still valid');
-        logger.error('3. The client ID and secret are correct');
+        logger.error('1. The refresh token is still valid');
+        logger.error('2. The client ID and secret are correct');
+        logger.error('3. The "offline" scope was included in the original authorization');
       }
       throw error;
     }
