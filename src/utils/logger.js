@@ -2,6 +2,8 @@
  * Logger utility for consistent logging across the action
  */
 
+const fs = require('fs');
+
 // Only require @actions/core if we're in a GitHub Actions environment
 let core;
 try {
@@ -73,7 +75,6 @@ class Logger {
       // Also use the new GITHUB_OUTPUT method
       const outputFile = process.env.GITHUB_OUTPUT;
       if (outputFile) {
-        const fs = require('fs');
         fs.appendFileSync(outputFile, `${name}=${value}\n`);
       }
     } else {
