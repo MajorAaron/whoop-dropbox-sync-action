@@ -67,8 +67,9 @@ EOF
     echo "✅ .env file updated"
     echo ""
     echo "Updating GitHub secret..."
-    gh secret set WHOOP_REFRESH_TOKEN --body "$REFRESH_TOKEN" --repo MajorAaron/THE-MAINFRAME
-    echo "✅ GitHub secret updated"
+    REPO=${GITHUB_REPOSITORY:-aaronmajor/whoop-obsidian-sync-action}
+    gh secret set WHOOP_REFRESH_TOKEN --body "$REFRESH_TOKEN" --repo $REPO
+    echo "✅ GitHub secret updated for $REPO"
 else
     echo ""
     echo "❌ Failed to get tokens"

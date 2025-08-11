@@ -107,7 +107,8 @@ async function main() {
                 console.log(`WHOOP_CLIENT_SECRET: ${clientSecret}`);
                 console.log(`WHOOP_REFRESH_TOKEN: ${tokens.refresh_token}`);
                 console.log('\n✅ Add these to your repository secrets at:');
-                console.log('https://github.com/MajorAaron/THE-MAINFRAME/settings/secrets/actions\n');
+                const repo = process.env.GITHUB_REPOSITORY || 'aaronmajor/whoop-obsidian-sync-action';
+                console.log(`https://github.com/${repo}/settings/secrets/actions\n`);
               } else {
                 console.error('❌ Error: No refresh token received');
                 console.error('Response:', data);

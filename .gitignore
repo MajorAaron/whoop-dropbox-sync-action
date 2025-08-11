@@ -10,7 +10,7 @@ WHOOP/
 # Environment variables
 .env
 .env.local
-
+.dropbox
 # Token storage
 .whoop-tokens.json
 

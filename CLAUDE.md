@@ -5,6 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 GitHub Action that syncs Whoop fitness data to Obsidian markdown notes using OAuth 2.0 authentication. Creates beautifully formatted daily health notes with comprehensive metrics. Handles Whoop's rotating refresh tokens automatically.
 
+### Deployment Options
+1. **Self-contained workflow** (NEW): The workflow lives in this repo and pushes to external repos
+   - See `.github/workflows/sync-to-mainframe.yml`
+   - Workflow runs here, pushes data to THE MAINFRAME or any target repo
+2. **Traditional action**: Other repos can use this action via `uses: aaronmajor/whoop-obsidian-sync-action@main`
+
 ## Development Commands
 
 ```bash

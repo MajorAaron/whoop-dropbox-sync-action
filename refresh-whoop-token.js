@@ -90,8 +90,8 @@ async function main() {
         // Update GitHub secrets
         console.log('\n📤 Updating GitHub secrets...');
         
-        // Try to detect repository from git remote
-        let repo = 'MajorAaron/THE-MAINFRAME'; // default
+        // Try to detect repository from git remote or use current repo
+        let repo = process.env.GITHUB_REPOSITORY || 'aaronmajor/whoop-obsidian-sync-action';
         try {
           const { stdout } = await execAsync('git remote get-url origin');
           const match = stdout.match(/github\.com[:/]([^/]+\/[^.]+)/);

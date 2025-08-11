@@ -53,7 +53,7 @@ async function updateGitHubSecrets(clientId, clientSecret, refreshToken) {
   console.log('\n=== Updating GitHub Secrets ===');
   
   // Ask for repository
-  const defaultRepo = 'MajorAaron/THE-MAINFRAME';
+  const defaultRepo = process.env.GITHUB_REPOSITORY || 'aaronmajor/whoop-obsidian-sync-action';
   const repo = await prompt(`Enter your GitHub repository`, defaultRepo);
   
   try {

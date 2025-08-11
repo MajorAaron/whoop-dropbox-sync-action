@@ -9,8 +9,19 @@ const logger = require('../utils/logger');
 
 class FileManager {
   constructor(basePath = 'WHOOP') {
-    this.basePath = basePath;
+    // Support both relative and absolute paths
+    // If OUTPUT_PATH env var is set, it takes precedence
+    const outputPath = process.env.OUTPUT_PATH || basePath;
+    
+    // If the path is relative, resolve it from the current working directory
+    if (path.isAbsolute(outputPath)) {
+      this.basePath = path.join(outputPath, 'WHOOP');
+    } else {
+      this.basePath = path.resolve(process.cwd(), outputPath);
+    }
+    
     this.notesCreated = 0;
+    logger.debug(`FileManager initialized with base path: ${this.basePath}`);
   }
 
   /**

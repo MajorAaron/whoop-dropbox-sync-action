@@ -63,8 +63,9 @@ WHOOP_REDIRECT_URI=${redirectUri}`;
         // Update GitHub secrets
         console.log('Updating GitHub secrets...');
         try {
-          await execAsync(`gh secret set WHOOP_REFRESH_TOKEN --body "${tokens.refresh_token}" --repo MajorAaron/THE-MAINFRAME`);
-          console.log('✅ GitHub secret updated\n');
+          const repo = process.env.GITHUB_REPOSITORY || 'aaronmajor/whoop-obsidian-sync-action';
+          await execAsync(`gh secret set WHOOP_REFRESH_TOKEN --body "${tokens.refresh_token}" --repo ${repo}`);
+          console.log(`✅ GitHub secret updated for ${repo}\n`);
         } catch (e) {
           console.log('⚠️  Could not update GitHub secret automatically\n');
         }

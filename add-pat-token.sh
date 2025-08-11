@@ -6,8 +6,9 @@ read -s PAT_TOKEN
 echo ""
 echo "Adding PAT to GitHub secrets..."
 
-gh secret set PA_TOKEN --body "$PAT_TOKEN" --repo MajorAaron/THE-MAINFRAME
+REPO=${GITHUB_REPOSITORY:-aaronmajor/whoop-obsidian-sync-action}
+gh secret set PA_TOKEN --body "$PAT_TOKEN" --repo $REPO
 
-echo "✅ PA_TOKEN added to repository secrets"
+echo "✅ PA_TOKEN added to repository secrets for $REPO"
 echo ""
 echo "You can now delete this script for security"
