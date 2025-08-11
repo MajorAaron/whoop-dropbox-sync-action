@@ -96,7 +96,7 @@ Add these secrets to your repository (Settings → Secrets → Actions):
 
 ### Step 3: Create Workflow
 
-Create `.github/workflows/whoop-sync.yml` in your repository:
+Create `.github/workflows/whoop-to-dropbox.yml` in your repository:
 
 ```yaml
 name: Sync Whoop Data to Dropbox
@@ -291,8 +291,10 @@ cd whoop-obsidian-sync-action
 # Install dependencies
 npm install
 
-# Set up Whoop authentication
+# Set up Whoop authentication (interactive)
 node get-whoop-token.js
+# OR use the automated helper
+node auto-whoop-auth.js
 
 # Set up Dropbox authentication
 node setup-dropbox-auth.js
@@ -300,6 +302,15 @@ node setup-dropbox-auth.js
 # Test the complete sync to Dropbox
 node test-dropbox-sync.js
 ```
+
+### Helper Scripts
+
+- `get-whoop-token.js` - Interactive Whoop OAuth flow with local server
+- `auto-whoop-auth.js` - Automated Whoop OAuth with browser opening
+- `setup-dropbox-auth.js` - Interactive Dropbox OAuth setup
+- `test-dropbox-sync.js` - Test complete sync to Dropbox
+- `test-oauth.js` - Test Whoop OAuth token refresh
+- `refresh-whoop-token.js` - Refresh Whoop token and update GitHub secrets
 
 ## 🔧 Troubleshooting
 
@@ -338,12 +349,19 @@ If tokens aren't updating automatically:
 
 1. **Access Token Expired**:
    - Access tokens expire after ~4 hours
-   - The action should auto-refresh using the refresh token
+   - The action automatically refreshes using the refresh token
    - If not working, run `node setup-dropbox-auth.js` for new tokens
 
 2. **Permission Denied**:
    - Ensure your Dropbox app has "Full Dropbox" access
    - Check that all Dropbox secrets are set correctly
+
+### Workflow Success
+
+When the workflow runs successfully, you'll see:
+- Files uploaded to `/WHOOP/Daily/YYYY/MM-Month/` in your Dropbox
+- README.md created/updated in `/WHOOP/`
+- Tokens automatically updated in GitHub secrets if rotated
 
 ## 🤝 Contributing
 
