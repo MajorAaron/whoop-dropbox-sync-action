@@ -14,6 +14,9 @@ const querystring = require('querystring');
 const readline = require('readline');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -44,6 +47,52 @@ async function loadEnvFile() {
   }
   
   return config;
+}
+
+async function updateGitHubSecrets(clientId, clientSecret, refreshToken) {
+  console.log('\n=== Updating GitHub Secrets ===');
+  
+  // Ask for repository
+  const defaultRepo = 'MajorAaron/THE-MAINFRAME';
+  const repo = await prompt(`Enter your GitHub repository`, defaultRepo);
+  
+  try {
+    // Check if gh CLI is installed
+    await execAsync('which gh');
+    
+    console.log('\nUpdating secrets in repository:', repo);
+    
+    // Update each secret
+    await execAsync(`gh secret set WHOOP_CLIENT_ID --body "${clientId}" --repo ${repo}`);
+    console.log('✅ WHOOP_CLIENT_ID updated');
+    
+    await execAsync(`gh secret set WHOOP_CLIENT_SECRET --body "${clientSecret}" --repo ${repo}`);
+    console.log('✅ WHOOP_CLIENT_SECRET updated');
+    
+    await execAsync(`gh secret set WHOOP_REFRESH_TOKEN --body "${refreshToken}" --repo ${repo}`);
+    console.log('✅ WHOOP_REFRESH_TOKEN updated');
+    
+    console.log('\n✅ All GitHub secrets updated successfully!');
+    console.log(`View at: https://github.com/${repo}/settings/secrets/actions\n`);
+    
+    return true;
+  } catch (error) {
+    if (error.message.includes('which gh')) {
+      console.log('\n⚠️  GitHub CLI not installed.');
+      console.log('Install it with: brew install gh');
+      console.log('Or manually add these secrets at:');
+      console.log(`https://github.com/${repo}/settings/secrets/actions\n`);
+    } else if (error.message.includes('gh secret set')) {
+      console.log('\n⚠️  Failed to update GitHub secrets.');
+      console.log('Make sure you are logged in to GitHub CLI:');
+      console.log('Run: gh auth login\n');
+      console.log('Or manually add these secrets at:');
+      console.log(`https://github.com/${repo}/settings/secrets/actions\n`);
+    } else {
+      console.log('\n⚠️  Error updating GitHub secrets:', error.message);
+    }
+    return false;
+  }
 }
 
 async function main() {
@@ -174,30 +223,39 @@ async function main() {
                 fs.writeFileSync(path.join(__dirname, '.env'), envContent);
                 console.log('✅ Saved credentials to .env file\n');
                 
-                console.log('=== GitHub Secrets Configuration ===');
-                console.log('Add these to your repository secrets:');
-                console.log(`WHOOP_CLIENT_ID: ${clientId}`);
-                console.log(`WHOOP_CLIENT_SECRET: ${clientSecret}`);
-                console.log(`WHOOP_REFRESH_TOKEN: ${tokens.refresh_token}`);
-                console.log('\n✅ Add these at:');
-                console.log('https://github.com/YOUR_USERNAME/YOUR_REPO/settings/secrets/actions\n');
-                
-                console.log('=== Test Your Setup ===');
-                console.log('Run this command to test:');
-                console.log('node test-oauth.js\n');
+                // Update GitHub secrets
+                updateGitHubSecrets(clientId, clientSecret, tokens.refresh_token).then((success) => {
+                  if (!success) {
+                    console.log('=== Manual Configuration Required ===');
+                    console.log('Add these to your repository secrets:');
+                    console.log(`WHOOP_CLIENT_ID: ${clientId}`);
+                    console.log(`WHOOP_CLIENT_SECRET: ${clientSecret}`);
+                    console.log(`WHOOP_REFRESH_TOKEN: ${tokens.refresh_token}`);
+                  }
+                  
+                  console.log('\n=== Test Your Setup ===');
+                  console.log('Run this command to test:');
+                  console.log('node test-oauth.js\n');
+                  
+                  server.close();
+                  rl.close();
+                  process.exit(0);
+                });
               } else {
                 console.error('❌ Error: No refresh token received');
                 console.error('Response:', data);
                 console.error('\nMake sure your Whoop app has the "offline" scope enabled.');
+                server.close();
+                rl.close();
+                process.exit(1);
               }
             } catch (e) {
               console.error('❌ Error parsing token response:', e);
               console.error('Response:', data);
+              server.close();
+              rl.close();
+              process.exit(1);
             }
-            
-            server.close();
-            rl.close();
-            process.exit(0);
           });
         });
         
