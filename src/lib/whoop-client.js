@@ -16,12 +16,31 @@ class WhoopClient {
     this.newRefreshToken = null;
     this.apiBase = 'https://api.prod.whoop.com';
     this.scope = 'read:recovery read:cycles read:sleep read:workout read:profile read:body_measurement offline';
+    this.refreshPromise = null; // Track ongoing refresh to prevent concurrent refreshes
   }
 
   /**
    * Refresh the access token using the refresh token
    */
   async refreshAccessToken() {
+    // If refresh is already in progress, wait for it
+    if (this.refreshPromise) {
+      logger.debug('Token refresh already in progress, waiting...');
+      return this.refreshPromise;
+    }
+    
+    // Start new refresh
+    this.refreshPromise = this._doRefreshAccessToken();
+    
+    try {
+      const result = await this.refreshPromise;
+      return result;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+  
+  async _doRefreshAccessToken() {
     logger.info('Refreshing access token...');
     
     // Include both redirect_uri and scope: 'offline' for compatibility
@@ -154,9 +173,7 @@ class WhoopClient {
    */
   async fetchAllData(daysBack = 7) {
     // First ensure we have a valid access token
-    if (!this.accessToken) {
-      await this.refreshAccessToken();
-    }
+    await this.refreshAccessToken();
     
     const endDate = new Date();
     const startDate = new Date();
