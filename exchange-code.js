@@ -65,7 +65,7 @@ async function updateGitHubSecret(refreshToken) {
   const execAsync = promisify(exec);
   
   try {
-    await execAsync(`gh secret set WHOOP_REFRESH_TOKEN --body "${refreshToken}" --repo aarongmajor/whoop-dropbox-sync-action`);
+    await execAsync(`gh secret set WHOOP_REFRESH_TOKEN --body "${refreshToken}" --repo MajorAaron/whoop-dropbox-sync-action`);
     console.log('✅ GitHub secret updated!');
   } catch (error) {
     console.error('Failed to update GitHub secret:', error.message);

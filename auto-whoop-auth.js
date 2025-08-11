@@ -85,7 +85,7 @@ const server = http.createServer(async (req, res) => {
               // Update GitHub secret
               console.log('📤 Updating GitHub secret...\n');
               try {
-                execSync(`gh secret set WHOOP_REFRESH_TOKEN --body "${tokens.refresh_token}" --repo aarongmajor/whoop-dropbox-sync-action`, { stdio: 'inherit' });
+                execSync(`gh secret set WHOOP_REFRESH_TOKEN --body "${tokens.refresh_token}" --repo MajorAaron/whoop-obsidian-sync-action`, { stdio: 'inherit' });
                 console.log('✅ GitHub secret updated!\n');
               } catch (e) {
                 console.log('❌ Failed to update GitHub secret. Update manually.\n');
