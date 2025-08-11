@@ -11,6 +11,9 @@ WHOOP/
 .env
 .env.local
 
+# Token storage
+.whoop-tokens.json
+
 # IDE
 .vscode/
 .idea/
