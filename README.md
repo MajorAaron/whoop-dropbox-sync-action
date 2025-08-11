@@ -3,7 +3,7 @@
 [![GitHub Action](https://img.shields.io/badge/GitHub-Action-blue?logo=github)](https://github.com/marketplace/actions/whoop-to-dropbox-sync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A GitHub Action that syncs your Whoop fitness data directly to Dropbox as Obsidian-formatted markdown notes with comprehensive health metrics, sleep analysis, recovery scores, and workout details.
+A GitHub Action that syncs your Whoop fitness data directly to Dropbox as beautifully formatted markdown notes with comprehensive health metrics, sleep analysis, recovery scores, and workout details.
 
 ## 🌟 Features
 
@@ -45,7 +45,7 @@ A GitHub Action that syncs your Whoop fitness data directly to Dropbox as Obsidi
 
 ### Prerequisites
 
-1. A Dropbox account for storing your Obsidian notes
+1. A Dropbox account for storing your health notes
 2. Whoop API credentials
 3. Dropbox API credentials
 4. A Personal Access Token (PAT) with `repo` and `workflow` permissions

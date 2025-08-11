@@ -1,6 +1,6 @@
 /**
  * File Manager
- * Handles file operations for saving Obsidian notes to Dropbox
+ * Handles file operations for saving markdown notes to Dropbox
  */
 
 const path = require('path');

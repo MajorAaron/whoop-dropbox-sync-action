@@ -1,7 +1,7 @@
 {
-  "name": "whoop-obsidian-sync-action",
+  "name": "whoop-dropbox-sync-action",
   "version": "1.0.0",
-  "description": "GitHub Action to sync Whoop fitness data to Obsidian markdown notes",
+  "description": "GitHub Action to sync Whoop fitness data to Dropbox as markdown notes",
   "main": "src/index.js",
   "scripts": {
     "test": "node src/index.js",
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MajorAaron/whoop-obsidian-sync-action.git"
+    "url": "git+https://github.com/MajorAaron/whoop-dropbox-sync-action.git"
   },
   "keywords": [
     "github-action",
     "whoop",
-    "obsidian",
+    "dropbox",
     "fitness",
     "health",
     "markdown",
@@ -23,9 +23,9 @@
   "author": "MajorAaron",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/MajorAaron/whoop-obsidian-sync-action/issues"
+    "url": "https://github.com/MajorAaron/whoop-dropbox-sync-action/issues"
   },
-  "homepage": "https://github.com/MajorAaron/whoop-obsidian-sync-action#readme",
+  "homepage": "https://github.com/MajorAaron/whoop-dropbox-sync-action#readme",
   "dependencies": {
     "@actions/core": "^1.10.1",
     "dotenv": "^17.2.1",

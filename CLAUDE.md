@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-GitHub Action that syncs Whoop fitness data directly to Dropbox as Obsidian-formatted markdown notes using OAuth 2.0 authentication. Creates beautifully formatted daily health notes with comprehensive metrics. Handles both Whoop and Dropbox token rotation automatically.
+GitHub Action that syncs Whoop fitness data directly to Dropbox as beautifully formatted markdown notes using OAuth 2.0 authentication. Creates comprehensive daily health notes with all fitness metrics. Handles both Whoop and Dropbox token rotation automatically.
 
 ### Deployment
 The workflow runs in this repository and uploads files directly to Dropbox at `/WHOOP/` path. No git operations or local file storage needed.
@@ -22,11 +22,8 @@ node auto-whoop-auth.js
 # Get fresh Dropbox OAuth tokens
 node setup-dropbox-auth.js
 
-# Test OAuth authentication
-node test-oauth.js
-
-# Test complete Dropbox sync locally
-node test-dropbox-sync.js
+# Refresh Whoop tokens if needed
+node refresh-whoop-token.js
 
 # Refresh Whoop tokens and update GitHub secrets
 node refresh-whoop-token.js
@@ -37,7 +34,7 @@ node refresh-whoop-token.js
 ### Core Components
 - **Whoop Client** (`src/lib/whoop-client.js`): Handles OAuth 2.0 with refresh token rotation, fetches all Whoop data endpoints
 - **Dropbox Client** (`src/lib/dropbox-client.js`): Handles Dropbox API operations, file uploads, and token refresh
-- **Formatter** (`src/lib/obsidian-formatter.js`): Converts API data to Obsidian markdown with frontmatter and visual indicators
+- **Formatter** (`src/lib/dropbox-formatter.js`): Converts API data to markdown with frontmatter and visual indicators
 - **File Manager** (`src/lib/file-manager.js`): Uploads files to Dropbox with hierarchical directory structure (/WHOOP/Daily/YYYY/MM-Month/)
 - **Logger** (`src/utils/logger.js`): Handles GitHub Actions outputs with both legacy and new GITHUB_OUTPUT format
 - **Token Managers** (`src/utils/token-manager.js`, `src/utils/dropbox-token-manager.js`): Manage token persistence and rotation

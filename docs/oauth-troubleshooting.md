@@ -63,7 +63,7 @@ If you used a different redirect URI when registering your Whoop app, you can sp
 
 ```yaml
 - name: Sync Whoop Data
-  uses: MajorAaron/whoop-obsidian-sync-action@v1
+  uses: MajorAaron/whoop-dropbox-sync-action@v1
   with:
     whoop_client_id: ${{ secrets.WHOOP_CLIENT_ID }}
     whoop_client_secret: ${{ secrets.WHOOP_CLIENT_SECRET }}
@@ -112,7 +112,7 @@ Enable debug logging to see detailed OAuth information:
 
 ```yaml
 - name: Sync Whoop Data
-  uses: MajorAaron/whoop-obsidian-sync-action@v1
+  uses: MajorAaron/whoop-dropbox-sync-action@v1
   with:
     whoop_client_id: ${{ secrets.WHOOP_CLIENT_ID }}
     whoop_client_secret: ${{ secrets.WHOOP_CLIENT_SECRET }}
@@ -126,4 +126,4 @@ Enable debug logging to see detailed OAuth information:
 2. Ensure the redirect URI is exactly: `http://localhost:8080/callback`
 3. Try generating a fresh refresh token using `fix-whoop-auth.js`
 4. Check the GitHub Actions logs with debug mode enabled
-5. Open an issue at: https://github.com/MajorAaron/whoop-obsidian-sync-action/issues
+5. Open an issue at: https://github.com/MajorAaron/whoop-dropbox-sync-action/issues

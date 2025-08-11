@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Whoop to Obsidian Sync Action
+ * Whoop to Dropbox Sync Action
  * Main entry point for the GitHub Action
  */
 
 const WhoopClient = require('./lib/whoop-client');
-const ObsidianFormatter = require('./lib/obsidian-formatter');
+const DropboxFormatter = require('./lib/dropbox-formatter');
 const FileManager = require('./lib/file-manager');
 const DropboxClient = require('./lib/dropbox-client');
 const DropboxTokenManager = require('./utils/dropbox-token-manager');
@@ -27,7 +27,7 @@ function getInput(name, defaultValue = '') {
  */
 async function main() {
   try {
-    logger.info('🚀 Starting Whoop to Obsidian Sync Action');
+    logger.info('🚀 Starting Whoop to Dropbox Sync Action');
     
     // Get Whoop inputs
     const clientId = getInput('whoop_client_id');
@@ -83,7 +83,7 @@ async function main() {
     // Initialize components
     const whoopClient = new WhoopClient(clientId, clientSecret, refreshToken, redirectUri);
     const tokenManager = new TokenManager();
-    const formatter = new ObsidianFormatter();
+    const formatter = new DropboxFormatter();
     const fileManager = new FileManager(dropboxClient, dropboxPath);
     
     // Try to load cached tokens

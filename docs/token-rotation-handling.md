@@ -46,7 +46,7 @@ jobs:
         
       - name: Sync Whoop data
         id: whoop-sync
-        uses: MajorAaron/whoop-obsidian-sync-action@v1
+        uses: MajorAaron/whoop-dropbox-sync-action@v1
         with:
           whoop_client_id: ${{ secrets.WHOOP_CLIENT_ID }}
           whoop_client_secret: ${{ secrets.WHOOP_CLIENT_SECRET }}

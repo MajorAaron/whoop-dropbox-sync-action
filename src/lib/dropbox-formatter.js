@@ -1,11 +1,9 @@
 /**
- * Obsidian Formatter
- * Formats Whoop data into Obsidian-compatible markdown notes
+ * Dropbox Formatter
+ * Formats Whoop data into markdown notes for Dropbox storage
  */
 
-const logger = require('../utils/logger');
-
-class ObsidianFormatter {
+class DropboxFormatter {
   constructor(options = {}) {
     this.dateFormat = options.dateFormat || 'YYYY-MM-DD';
   }
@@ -323,7 +321,7 @@ class ObsidianFormatter {
 
     // Footer
     content += `---\n`;
-    content += `*Synced via [Whoop to Obsidian Sync](https://github.com/MajorAaron/whoop-obsidian-sync-action) on ${new Date().toISOString()}*\n`;
+    content += `*Synced via [Whoop to Dropbox Sync](https://github.com/MajorAaron/whoop-dropbox-sync-action) on ${new Date().toISOString()}*\n`;
 
     return content;
   }
@@ -387,9 +385,9 @@ WHOOP/
 - Updated when changed in Whoop app
 
 ---
-*Powered by [Whoop to Obsidian Sync Action](https://github.com/MajorAaron/whoop-obsidian-sync-action)*
+*Powered by [Whoop to Dropbox Sync Action](https://github.com/MajorAaron/whoop-dropbox-sync-action)*
 `;
   }
 }
 
-module.exports = ObsidianFormatter;
+module.exports = DropboxFormatter;

@@ -1,5 +1,5 @@
 name: 'Whoop to Dropbox Sync'
-description: 'Sync Whoop fitness data to Dropbox as Obsidian markdown notes'
+description: 'Sync Whoop fitness data to Dropbox as markdown notes'
 author: 'MajorAaron'
 branding:
   icon: 'activity'
