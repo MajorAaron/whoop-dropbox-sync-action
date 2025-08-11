@@ -65,8 +65,17 @@ class Logger {
   }
 
   setOutput(name, value) {
-    if (process.env.GITHUB_ACTIONS && core) {
-      core.setOutput(name, value);
+    if (process.env.GITHUB_ACTIONS) {
+      // Use both methods for compatibility
+      if (core) {
+        core.setOutput(name, value);
+      }
+      // Also use the new GITHUB_OUTPUT method
+      const outputFile = process.env.GITHUB_OUTPUT;
+      if (outputFile) {
+        const fs = require('fs');
+        fs.appendFileSync(outputFile, `${name}=${value}\n`);
+      }
     } else {
       console.log(`Output: ${name}=${value}`);
     }
