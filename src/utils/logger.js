@@ -68,20 +68,12 @@ class Logger {
 
   setOutput(name, value) {
     if (process.env.GITHUB_ACTIONS) {
-      // Use both methods for compatibility
       if (core) {
+        // Use @actions/core which handles both legacy and new output methods
         core.setOutput(name, value);
-      }
-      // Also use the new GITHUB_OUTPUT method
-      const outputFile = process.env.GITHUB_OUTPUT;
-      if (outputFile) {
-        try {
-          fs.appendFileSync(outputFile, `${name}=${value}\n`);
-        } catch (error) {
-          console.error(`Failed to write to GITHUB_OUTPUT: ${error.message}`);
-          // Fallback to console output
-          console.log(`::set-output name=${name}::${value}`);
-        }
+      } else {
+        // Fallback to console command if core is not available
+        console.log(`::set-output name=${name}::${value}`);
       }
     } else {
       console.log(`Output: ${name}=${value}`);

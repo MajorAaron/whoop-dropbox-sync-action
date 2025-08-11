@@ -1,93 +1,104 @@
-#!/usr/bin/env node
-
 const https = require('https');
-const querystring = require('querystring');
-const fs = require('fs');
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const execAsync = promisify(exec);
+require('dotenv').config();
 
-const code = 'ViM82BOy_nGFBLj3jurMFW0iZhs4AtgpziQFVNFnfL8.ecEFb5pAIvQH9rIJmvcbaZKxexl0cMN_kUCrsDajGHs';
-const clientId = 'b64d5aa5-70ee-4082-bc40-6044890871e3';
-const clientSecret = 'da62fe4a2c0674c3a563296e494b5217e42247979b60508ca4b38bd574e29dac';
-const redirectUri = 'http://localhost:3000/api/auth/callback';
+const code = 'Bt_fiwgTf4-cZcN-ovqGhv4ulz7alJcj4ayRh9Ahv2c.KkugGj0VUEoIdwTC7fYCGADjlqz9jW3Hwkpjk1BWXBY';
 
-console.log('Exchanging authorization code for tokens...\n');
-
-const tokenData = querystring.stringify({
-  grant_type: 'authorization_code',
-  code: code,
-  client_id: clientId,
-  client_secret: clientSecret,
-  redirect_uri: redirectUri
-});
-
-const options = {
-  hostname: 'api.prod.whoop.com',
-  path: '/oauth/oauth2/token',
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Content-Length': tokenData.length
-  }
-};
-
-const req = https.request(options, (res) => {
-  let data = '';
-  
-  res.on('data', (chunk) => {
-    data += chunk;
+async function exchangeCodeForTokens() {
+  const data = new URLSearchParams({
+    grant_type: 'authorization_code',
+    code: code,
+    client_id: process.env.WHOOP_CLIENT_ID,
+    client_secret: process.env.WHOOP_CLIENT_SECRET,
+    redirect_uri: process.env.WHOOP_REDIRECT_URI || 'http://localhost:3000/api/auth/callback'
   });
   
-  res.on('end', async () => {
-    try {
-      const tokens = JSON.parse(data);
-      
-      if (tokens.refresh_token) {
-        console.log('=== SUCCESS! ===\n');
-        console.log('Access Token:', tokens.access_token.substring(0, 50) + '...');
-        console.log('Refresh Token:', tokens.refresh_token);
-        console.log('Expires In:', tokens.expires_in, 'seconds');
-        console.log('Scope:', tokens.scope);
-        console.log('');
-        
-        // Save to .env
-        const envContent = `WHOOP_CLIENT_ID=${clientId}
-WHOOP_CLIENT_SECRET=${clientSecret}
-WHOOP_REFRESH_TOKEN=${tokens.refresh_token}
-WHOOP_REDIRECT_URI=${redirectUri}`;
-        
-        fs.writeFileSync('.env', envContent);
-        console.log('✅ Saved to .env file\n');
-        
-        // Update GitHub secrets
-        console.log('Updating GitHub secrets...');
-        try {
-          const repo = process.env.GITHUB_REPOSITORY || 'aaronmajor/whoop-obsidian-sync-action';
-          await execAsync(`gh secret set WHOOP_REFRESH_TOKEN --body "${tokens.refresh_token}" --repo ${repo}`);
-          console.log(`✅ GitHub secret updated for ${repo}\n`);
-        } catch (e) {
-          console.log('⚠️  Could not update GitHub secret automatically\n');
-        }
-        
-        console.log('Now testing refresh with the new token...\n');
-        process.exit(0);
-      } else {
-        console.error('❌ Error in response:', data);
-        process.exit(1);
-      }
-    } catch (e) {
-      console.error('❌ Error:', e.message);
-      console.error('Response:', data);
-      process.exit(1);
+  const options = {
+    hostname: 'api.prod.whoop.com',
+    path: '/oauth/oauth2/token',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(data.toString())
     }
+  };
+  
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          resolve(JSON.parse(body));
+        } else {
+          reject(new Error(`Failed to exchange code: ${res.statusCode} ${body}`));
+        }
+      });
+    });
+    
+    req.on('error', reject);
+    req.write(data.toString());
+    req.end();
   });
-});
+}
 
-req.on('error', (e) => {
-  console.error('❌ Request error:', e);
-  process.exit(1);
-});
+async function updateEnvFile(refreshToken) {
+  const fs = require('fs');
+  const path = require('path');
+  
+  const envPath = path.join(__dirname, '.env');
+  let envContent = fs.readFileSync(envPath, 'utf8');
+  
+  // Update or add WHOOP_REFRESH_TOKEN
+  if (envContent.includes('WHOOP_REFRESH_TOKEN=')) {
+    envContent = envContent.replace(/WHOOP_REFRESH_TOKEN=.*/, `WHOOP_REFRESH_TOKEN=${refreshToken}`);
+  } else {
+    envContent += `\nWHOOP_REFRESH_TOKEN=${refreshToken}`;
+  }
+  
+  fs.writeFileSync(envPath, envContent);
+  console.log('✅ Updated .env file');
+}
 
-req.write(tokenData);
-req.end();
+async function updateGitHubSecret(refreshToken) {
+  const { exec } = require('child_process');
+  const { promisify } = require('util');
+  const execAsync = promisify(exec);
+  
+  try {
+    await execAsync(`gh secret set WHOOP_REFRESH_TOKEN --body "${refreshToken}" --repo MajorAaron/whoop-dropbox-sync-action`);
+    console.log('✅ GitHub secret updated!');
+  } catch (error) {
+    console.error('Failed to update GitHub secret:', error.message);
+  }
+}
+
+async function main() {
+  console.log('🔄 Exchanging authorization code for tokens...\n');
+  
+  try {
+    const tokens = await exchangeCodeForTokens();
+    
+    if (tokens.refresh_token) {
+      console.log('✅ SUCCESS! Got refresh token:\n');
+      console.log(tokens.refresh_token);
+      console.log('\n');
+      
+      // Update .env file
+      await updateEnvFile(tokens.refresh_token);
+      
+      // Update GitHub secret
+      console.log('📤 Updating GitHub secret...\n');
+      await updateGitHubSecret(tokens.refresh_token);
+      
+      console.log('🎉 Done! You can now run the GitHub workflow.');
+    } else {
+      console.error('❌ No refresh token received');
+      console.log('Response:', tokens);
+    }
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+    process.exit(1);
+  }
+}
+
+main().catch(console.error);

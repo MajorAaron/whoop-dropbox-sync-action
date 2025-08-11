@@ -43,22 +43,18 @@ class WhoopClient {
   async _doRefreshAccessToken() {
     logger.info('Refreshing access token...');
     
-    // Include both redirect_uri and scope: 'offline' for compatibility
+    // Per WHOOP docs, refresh token request only needs these parameters
     const data = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: this.refreshToken,
       client_id: this.clientId,
-      client_secret: this.clientSecret,
-      redirect_uri: this.redirectUri,
-      scope: 'offline'
+      client_secret: this.clientSecret
     });
 
     const bodyString = data.toString();
     logger.debug('Token refresh request parameters:', {
       grant_type: 'refresh_token',
       client_id: this.clientId,
-      redirect_uri: this.redirectUri,
-      scope: 'offline',
       // Don't log the actual secrets
       has_refresh_token: !!this.refreshToken,
       has_client_secret: !!this.clientSecret

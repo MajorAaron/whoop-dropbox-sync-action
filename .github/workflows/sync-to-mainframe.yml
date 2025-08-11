@@ -38,6 +38,7 @@ jobs:
       
       - name: Sync Whoop Data to Dropbox
         id: whoop-sync
+        continue-on-error: true
         env:
           # Whoop OAuth credentials
           WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
@@ -84,3 +85,9 @@ jobs:
           gh secret set DROPBOX_REFRESH_TOKEN \
             --body "${{ steps.whoop-sync.outputs.new_dropbox_refresh_token }}" \
             --repo ${{ github.repository }}
+      
+      - name: Check sync result
+        if: steps.whoop-sync.outcome == 'failure'
+        run: |
+          echo "❌ Sync step failed but token updates were processed"
+          exit 1
