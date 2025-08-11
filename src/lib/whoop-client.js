@@ -24,21 +24,21 @@ class WhoopClient {
   async refreshAccessToken() {
     logger.info('Refreshing access token...');
     
-    // Match Postman's working configuration:
-    // Include redirect_uri but not scope in refresh requests
+    // Match Postman's working configuration exactly (from line 367-372 of session log):
+    // Include scope: 'offline' in refresh requests
     const data = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: this.refreshToken,
       client_id: this.clientId,
       client_secret: this.clientSecret,
-      redirect_uri: this.redirectUri
+      scope: 'offline'
     });
 
     const bodyString = data.toString();
     logger.debug('Token refresh request parameters:', {
       grant_type: 'refresh_token',
       client_id: this.clientId,
-      redirect_uri: this.redirectUri,
+      scope: 'offline',
       // Don't log the actual secrets
       has_refresh_token: !!this.refreshToken,
       has_client_secret: !!this.clientSecret
