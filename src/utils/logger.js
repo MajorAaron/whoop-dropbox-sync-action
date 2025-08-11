@@ -75,7 +75,13 @@ class Logger {
       // Also use the new GITHUB_OUTPUT method
       const outputFile = process.env.GITHUB_OUTPUT;
       if (outputFile) {
-        fs.appendFileSync(outputFile, `${name}=${value}\n`);
+        try {
+          fs.appendFileSync(outputFile, `${name}=${value}\n`);
+        } catch (error) {
+          console.error(`Failed to write to GITHUB_OUTPUT: ${error.message}`);
+          // Fallback to console output
+          console.log(`::set-output name=${name}::${value}`);
+        }
       }
     } else {
       console.log(`Output: ${name}=${value}`);
